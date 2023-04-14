@@ -1,0 +1,29 @@
+ARG ARCH="amd64"
+ARG arch="amd64"
+ARG OS="linux"
+
+FROM 10.30.38.116/utccp-$arch/dependence-golang-builder:latest AS builder
+#RUN dnf module enable nodejs:14 -y && dnf install -y python3 make nodejs nodejs-devel nasm gcc-c++ yarnpkg git
+WORKDIR /build
+COPY . .
+RUN go env -w GO111MODULE=on && go env -w GOPROXY="https://goproxy.cn"
+RUN go build -o prometheus-webhook-dingtalk cmd/prometheus-webhook-dingtalk/main.go
+
+FROM 10.30.38.116/utccp-$arch/dependence-uos20:latest
+LABEL maintainer="Orange <jizongyao@uniontech.com>"
+
+ARG ARCH="amd64"
+ARG OS="linux"
+COPY --from=builder /build/prometheus-webhook-dingtalk   /bin/prometheus-webhook-dingtalk
+COPY config.example.yml                                 /prometheus-webhook-dingtalk/config.yml
+COPY contrib                                            /prometheus-webhook-dingtalk/
+COPY template/tky.tmpl                              /prometheus-webhook-dingtalk/template/default.tmpl
+
+RUN chown -R nobody:nobody /prometheus-webhook-dingtalk
+
+USER       nobody
+EXPOSE     8060
+VOLUME     [ "/prometheus-webhook-dingtalk" ]
+WORKDIR    /prometheus-webhook-dingtalk
+ENTRYPOINT [ "/bin/prometheus-webhook-dingtalk" ]
+CMD        [ "--config.file=/prometheus-webhook-dingtalk/config.yml" ]

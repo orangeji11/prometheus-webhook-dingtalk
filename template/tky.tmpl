@@ -1,0 +1,46 @@
+{{ define "__subject" }}云原生应用平台 TCAP用户, 您好:{{ end }}
+{{ define "default.__text_alert_list_firing" }}{{ range . }}
+------------------------------------------------
+告警名称：&nbsp;&nbsp;{{ .Labels.alertname }}  
+告警级别：&nbsp;&nbsp;{{ .Labels.severity }} 级  
+项目名称：&nbsp;&nbsp;{{ .Labels.namespace }}  
+Pod名称：&nbsp;&nbsp;&nbsp;{{ .Labels.pod }}  
+告警主题：&nbsp;&nbsp;{{ .Annotations.summary }} {{ .Annotations.summaryCn }}  
+告警详情：&nbsp;&nbsp;{{ .Annotations.message }}{{ .Annotations.description}}  
+故障时间：&nbsp;&nbsp;{{ dateInZone "2006.01.02 15:04:05" (.StartsAt) "Asia/Shanghai" }}  
+{{ end }}
+{{ end }}
+
+{{ define "default.__text_alert_list_resolve" }}{{ range . }}
+------------------------------------------------
+告警名称：&nbsp;&nbsp;{{ .Labels.alertname }}  
+告警级别：&nbsp;&nbsp;{{ .Labels.severity }} 级  
+项目名称：&nbsp;&nbsp;{{ .Labels.namespace }}  
+Pod名称：&nbsp;&nbsp;&nbsp;{{ .Labels.pod }}  
+告警主题：&nbsp;&nbsp;{{ .Annotations.summary }} {{ .Annotations.summaryCn }}  
+告警详情：&nbsp;&nbsp;{{ .Annotations.message }}{{ .Annotations.description}}  
+故障时间：&nbsp;&nbsp;{{ dateInZone "2006.01.02 15:04:05" (.StartsAt) "Asia/Shanghai" }}  
+恢复时间：&nbsp;&nbsp;{{ dateInZone "2006.01.02 15:04:05" (.EndsAt) "Asia/Shanghai" }} 
+{{ end }}
+{{ end }}
+
+{{/* Default */}}
+{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "default.content" }}
+统信容器云管理平台用户, 您好：  
+集群：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;统信容器云管理平台  
+租户：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;生产环境  
+{{ if gt (len .Alerts.Firing) 0 -}}
+**监控告警 [{{ .Alerts.Firing | len }}]**
+{{ template "default.__text_alert_list_firing" .Alerts.Firing }}  
+{{- end }}
+请注意处理！  
+{{ if gt (len .Alerts.Resolved) 0 -}}
+**告警恢复 [{{ .Alerts.Resolved | len }}]**
+{{ template "default.__text_alert_list_resolve" .Alerts.Resolved }}  
+{{- end }}
+{{- end }}
+
+{{/* Following names for compatibility */}}
+{{ define "ding.link.title" }}{{ template "default.title" . }}{{ end }}
+{{ define "ding.link.content" }}{{ template "default.content" . }}{{ end }}
